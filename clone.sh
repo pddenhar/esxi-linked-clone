@@ -7,7 +7,7 @@ usage() {
 }
 makeandcopy() {
   mkdir "$OUTFOLDER"
-  cp "$INFOLDER"/*-000001* "$OUTFOLDER"/
+  cp "$INFOLDER"/*-"$VMFILE"* "$OUTFOLDER"/
   cp "$INFOLDER"/*.vmx "$OUTFOLDER"/
 }
 main() {
@@ -16,15 +16,21 @@ main() {
     usage
     exit 1
   fi
+  
+  VMFILE=`ls $INFOLDER | grep -o "[0-9]\{6,6\}" | sort -u | tail -1`
 
   makeandcopy
+
+  #reference snapshot
+  SNAPSHOT=`grep -o "[^\"]*.vmsn" "$INFOLDER"/*.vmx | tail -1`
+  sed -i -e '/checkpoint.vmState =/s/= .*/= "..\/'$INFOLDER'\/'$SNAPSHOT'"/' $OUTFOLDER/*.vmx
 
   local fullbasepath=$(readlink -f "$INFOLDER")/
   cd "$OUTFOLDER"/
   sed -i '/sched.swap.derivedName/d' ./*.vmx #delete swap file line, will be auto recreated
   sed -i -e '/displayName =/ s/= .*/= "'$OUTFOLDER'"/' ./*.vmx #Change display name config value
   local escapedpath=$(echo "$fullbasepath" | sed -e 's/[\/&]/\\&/g')
-  sed -i -e '/parentFileNameHint=/ s/="/="'"$escapedpath"'/' ./*-000001.vmdk #change parent disk path
+  sed -i -e '/parentFileNameHint=/ s/="/="'"$escapedpath"'/' ./*-"$VMFILE".vmdk #change parent disk path
 
   # Forces generation of new MAC + DHCP, I think.
   sed -i '/ethernet0.generatedAddress/d' ./*.vmx
@@ -42,6 +48,12 @@ main() {
   #sed -i 's/nvram = "'${GOLDEN_VM_NAME}.nvram'"/nvram = "'${FINAL_VM_NAME}.nvram'"/' ${STORAGE_PATH}/$FINAL_VM_NAME/$FINAL_VM_NAME.vmx
   #sed -i 's/extendedConfigFile = "'${GOLDEN_VM_NAME}.vmxf'"/extendedConfigFile = "'${FINAL_VM_NAME}.vmxf'"/' ${STORAGE_PATH}/$FINAL_VM_NAME/$FINAL_VM_NAME.vmx
 
+  # delete machine id
+  sed -i '/machine.id/d' *.vmx
+
+  # add machine id
+  sed -i -e "\$amachine.id=$OUTFOLDER" *.vmx
+ 
   # Register the machine so that it appears in vSphere.
   FULL_PATH=`pwd`/*.vmx
   VMID=`vim-cmd solo/registervm $FULL_PATH`
