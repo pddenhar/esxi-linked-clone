@@ -17,7 +17,7 @@ main() {
     exit 1
   fi
   
-  VMFILE=`ls $INFOLDER | grep -o "[0-9]\{6,6\}" | sort -u | tail -1`
+  VMFILE=`grep scsi0\:0\.fileName "$INFOLDER"/*.vmx | grep -o "[0-9]\{6,6\}"`
 
   makeandcopy
 
