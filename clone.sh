@@ -13,7 +13,7 @@ makeandcopy() {
   cp "$INFOLDER"/*.vmx "$OUTFOLDER"/
 }
 main() {
-  if [  $NUMARGS -le 1 ]
+  if [ $NUMARGS -le 1 ]
   then
     usage
     exit 1
