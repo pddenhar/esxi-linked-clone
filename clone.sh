@@ -19,7 +19,24 @@ main() {
     exit 1
   fi
   
+  if echo "$INFOLDER" | grep "[[:space:]]"
+  then
+    echo '$INFOLDER cannot contain spaces!'
+    exit 1
+  fi
+  
+  if echo "$INFOLDER" | grep "/"
+  then
+    echo '$INFOLDER cannot contain slashes!'
+    exit 1
+  fi 
+  
   VMFILE=`grep -E "(scsi|sata)0\:0\.fileName" "$INFOLDER"/*.vmx | grep -o "[0-9]\{6,6\}"`
+  if [ -z "$VMFILE" ]
+  then
+    echo "No $VMFILE found!"
+    exit 1
+  fi  
 
   makeandcopy
 
