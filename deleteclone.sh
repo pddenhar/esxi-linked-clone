@@ -15,6 +15,9 @@ then
 fi
 
 VMID=$(vim-cmd vmsvc/getallvms | awk "/^[0-9]+ +$VMNAME /{print \$1}")
-vim-cmd vmsvc/power.off $VMID
-vim-cmd vmsvc/unregister $VMID
+if [ -n "$VMID" ]
+then
+  vim-cmd vmsvc/power.off $VMID
+  vim-cmd vmsvc/unregister $VMID
+fi
 rm -rf $VMNAME
