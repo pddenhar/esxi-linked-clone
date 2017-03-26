@@ -1,3 +1,5 @@
+set -e
+
 readonly NUMARGS=$#
 readonly INFOLDER=$1
 readonly OUTFOLDER=$2
