@@ -41,8 +41,8 @@ main() {
   makeandcopy
 
   #reference snapshot
-  SNAPSHOT=`grep -o "[^\"]*.vmsn" "$INFOLDER"/*.vmx | tail -1`
   sed -i -e '/checkpoint.vmState =/s/= .*/= "..\/'$INFOLDER'\/'$SNAPSHOT'"/' $OUTFOLDER/*.vmx
+  SNAPSHOT=`grep -o "[^\"]*.vmsn" "$INFOLDER"/*.vmx || (cd "$INFOLDER" && ls -r *.vmsn) | tail -1`
 
   local fullbasepath=$(readlink -f "$INFOLDER")/
   cd "$OUTFOLDER"/
