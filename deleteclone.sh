@@ -1,3 +1,5 @@
+set -e
+
 # Deletes a cloned VM created by clone.sh.
 if [ $# -le 0 ]
 then
