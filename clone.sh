@@ -1,3 +1,5 @@
+set -e
+
 readonly NUMARGS=$#
 readonly INFOLDER=$1
 readonly OUTFOLDER=$2
@@ -11,19 +13,40 @@ makeandcopy() {
   cp "$INFOLDER"/*.vmx "$OUTFOLDER"/
 }
 main() {
-  if [  $NUMARGS -le 1 ]
+  if [ $NUMARGS -le 1 ]
   then
     usage
     exit 1
   fi
   
-  VMFILE=`grep scsi0\:0\.fileName "$INFOLDER"/*.vmx | grep -o "[0-9]\{6,6\}"`
+  if echo "$INFOLDER" | grep "[[:space:]]"
+  then
+    echo '$INFOLDER cannot contain spaces!'
+    exit 1
+  fi
+  
+  if echo "$INFOLDER" | grep "/"
+  then
+    echo '$INFOLDER cannot contain slashes!'
+    exit 1
+  fi 
+  
+  VMFILE=`grep -E "(scsi|sata)0\:0\.fileName" "$INFOLDER"/*.vmx | grep -o "[0-9]\{6,6\}"`
+  if [ -z "$VMFILE" ]
+  then
+    echo "No $VMFILE found!"
+    exit 1
+  fi  
 
   makeandcopy
 
   #reference snapshot
-  SNAPSHOT=`grep -o "[^\"]*.vmsn" "$INFOLDER"/*.vmx | tail -1`
-  sed -i -e '/checkpoint.vmState =/s/= .*/= "..\/'$INFOLDER'\/'$SNAPSHOT'"/' $OUTFOLDER/*.vmx
+  SNAPSHOT=`grep -o "[^\"]*.vmsn" "$INFOLDER"/*.vmx || (cd "$INFOLDER" && ls -r *.vmsn) | tail -1`
+  if [ -n "$SNAPSHOT" ]
+  then
+    sed -i -e '/checkpoint.vmState =/s/= .*/= "..\/'$INFOLDER'\/'$SNAPSHOT'"/' $OUTFOLDER/*.vmx
+    sed -i -e 's/checkpoint.vmState.readOnly = "FALSE"/checkpoint.vmState.readOnly = "TRUE"/' $OUTFOLDER/*.vmx
+  fi
 
   local fullbasepath=$(readlink -f "$INFOLDER")/
   cd "$OUTFOLDER"/
